@@ -1,0 +1,27 @@
+{
+  "name": "baidu-baike",
+  "version": "1.0.0",
+  "description": "百度百科",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "author": {
+    "name": "wzbg",
+    "email": "z3530515@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wzbg/baidu-baike"
+  },
+  "keywords": [
+    "baidu",
+    "baike"
+  ],
+  "dependencies": {
+    "cheerio": "^0.20.0",
+    "fetch": "^1.0.1",
+    "sync-request": "^3.0.0"
+  }
+}
