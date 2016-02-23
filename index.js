@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-23 22:46:58
+* @Last Modified time: 2016-02-23 23:59:53
 */
 'use strict'
 
@@ -105,6 +105,7 @@ const getPara = ($, node) => {
 }
 
 const getPic = href => {
+  if (!href) return
   const res = request('GET', URL.resolve(url, href))
   const $ = cheerio.load(res.body.toString())
   const pics = new Set()
