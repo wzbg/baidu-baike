@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-22 23:02:29
+* @Last Modified time: 2016-02-23 14:22:11
 */
 'use strict'
 
@@ -21,7 +21,7 @@ module.exports = query => {
     finalUrl, // 最终网址
     name: $('dd.lemmaWgt-lemmaTitle-title h1').text(), // 名称 
     item: $('dd.lemmaWgt-lemmaTitle-title h2').text(), // 义项
-    summary: $('div.lemma-summary').text().replace(/\s+/g, ''), // 概要
+    summary: $('div.lemma-summary').text().trim(), // 概要
     images: getPic($('div.summary-pic a').attr('href')), // 概要相册
     contents: [] // 内容
   }
@@ -46,19 +46,8 @@ module.exports = query => {
     const title = $(element).find('span.title-text').text()
     const content = []
     for (let node =  $(element).next(); node.get(0) && node.get(0).name !== 'h2'; node = node.next()) {
-      const text = node.text().replace(/\s+/g, '')
-      const imgs = []
-      node.find('a[href]').each((index, element) => {
-        if (!$(element).find('img').length) return
-        const href = $(element).attr('href')
-        for (let img of getPic(href)) {
-          imgs.push(img)
-        }
-      })
-      const para = { type: node.get(0).name }
-      if (text) para.text = text
-      if (imgs.length) para.imgs = imgs
-      if (text || para.imgs) content.push(para)
+      const para = getPara($, node)
+      if (para) content.push(para)
     }
     result.contents.push({ title, content })
   })
@@ -66,19 +55,8 @@ module.exports = query => {
     const title = ''
     const content = []
     $('div.para').each((index, element) => {
-      const text = $(element).text().replace(/\s+/g, '')
-      const imgs = []
-      $(element).find('a[href]').each((index, element) => {
-        if (!$(element).find('img').length) return
-        const href = $(element).attr('href')
-        for (let img of getPic(href)) {
-          imgs.push(img)
-        }
-      })
-      const para = { type: element.name }
-      if (text) para.text = text
-      if (imgs.length) para.imgs = imgs
-      if (text || para.imgs) content.push(para)
+      const para = getPara($, $(element))
+      if (para) content.push(para)
     })
     result.contents.push({ title, content })
   }
@@ -87,6 +65,38 @@ module.exports = query => {
     result.tags.push($(element).text().replace(/\s+/g, ''))
   })
   return result
+}
+
+const getPara = ($, node) => {
+  const text = node.text().replace(/\s+/g, '')
+  const imgs = []
+  node.find('a[href]').each((index, element) => {
+    if (!$(element).find('img').length) return
+    const href = $(element).attr('href')
+    for (let img of getPic(href)) {
+      imgs.push(img)
+    }
+  })
+  const para = { type: node.get(0).name }
+  if (text) {
+    if (para.type === 'table') {
+      para.table = []
+      node.find('tr').each((index, element) => {
+        const tr = []
+        para.table.push(tr)
+        $(element).children().each((index, element) => {
+          tr.push({
+            type: element.name,
+            text: $(element).text().replace(/\s+/g, '')
+          })
+        })
+      })
+    } else {
+      para.text = text
+    }
+  }
+  if (imgs.length) para.imgs = imgs
+  if (text || para.imgs) return para
 }
 
 const getPic = href => {

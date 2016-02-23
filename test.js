@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:39:14
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-22 23:03:33
+* @Last Modified time: 2016-02-23 14:26:25
 */
 'use strict'
 
@@ -18,4 +18,10 @@ console.log(result)
 
 for (let content of result.contents) {
   console.log(content.title, content.content)
+  // console.log(content.title)
+  // for (let con of content.content) {
+  //   if (con.table) {
+  //     console.log(con.type, con.table)
+  //   }
+  // }
 }
