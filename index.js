@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-23 22:15:24
+* @Last Modified time: 2016-02-23 22:29:44
 */
 'use strict'
 
@@ -17,7 +17,7 @@ module.exports = query => (
   new Promise((resolve, reject) => {
     fetchUrl(url + encodeURI(query), (err, res, buf) => {
       const finalUrl = decodeURI(res.finalUrl)
-      if (finalUrl.endsWith('/error.html')) return reject(new Error('not found'))
+      if (finalUrl.endsWith('/error.html')) return reject(new Error(`[${query}] Not Found`))
       const $ = cheerio.load(buf)
       $('script,sup,.description,.album-list').remove() // 删除参考资料 & 描述 & 词条图册
       const result = {
@@ -82,16 +82,16 @@ const getPara = ($, node) => {
       imgs.push(img)
     }
   })
-  const para = { type: node.get(0).name }
+  const para = { tag: node.get(0).name }
   if (text) {
-    if (para.type === 'table') {
+    if (para.tag === 'table') {
       para.table = []
       node.find('tr').each((index, element) => {
         const tr = []
         para.table.push(tr)
         $(element).children().each((index, element) => {
           tr.push({
-            type: element.name,
+            tag: element.name,
             text: $(element).text().replace(/\s+/g, '')
           })
         })
