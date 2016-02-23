@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-23 22:29:44
+* @Last Modified time: 2016-02-23 22:46:58
 */
 'use strict'
 
@@ -82,16 +82,16 @@ const getPara = ($, node) => {
       imgs.push(img)
     }
   })
-  const para = { tag: node.get(0).name }
+  const para = { name: node.get(0).name }
   if (text) {
-    if (para.tag === 'table') {
+    if (para.name === 'table') {
       para.table = []
       node.find('tr').each((index, element) => {
         const tr = []
         para.table.push(tr)
         $(element).children().each((index, element) => {
           tr.push({
-            tag: element.name,
+            name: element.name,
             text: $(element).text().replace(/\s+/g, '')
           })
         })
