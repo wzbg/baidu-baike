@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-23 23:59:53
+* @Last Modified time: 2016-02-24 15:25:39
 */
 'use strict'
 
@@ -16,6 +16,7 @@ const url = 'http://baike.baidu.com/item/'
 module.exports = query => (
   new Promise((resolve, reject) => {
     fetchUrl(url + encodeURI(query), (err, res, buf) => {
+      if (err) return reject(err)
       const finalUrl = decodeURI(res.finalUrl)
       if (finalUrl.endsWith('/error.html')) return reject(new Error(`[${query}] Not Found`))
       const $ = cheerio.load(buf)
