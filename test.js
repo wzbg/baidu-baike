@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:39:14
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-23 23:22:37
+* @Last Modified time: 2016-02-24 17:28:30
 */
 'use strict'
 
@@ -11,10 +11,10 @@ const baike = require('./index')
 // const query = 'seed'
 // const query = '科技'
 // const query = '太空'
-// const query = '三体'
+const query = '三体'
 // const query = 'Twitter'
 // const query = 'Android'
-const query = 'Nintendo'
+// const query = 'Nintendo'
 
 baike(query).then(res => {
   // console.log(res)
@@ -23,7 +23,7 @@ baike(query).then(res => {
     // console.log(content.title)
     // console.log(content.content)
     for (let con of content.content) {
-      if (con.type === 'table') {
+      if (con.name === 'table') {
         console.log(con.table)
       }
     }

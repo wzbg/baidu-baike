@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-24 15:25:39
+* @Last Modified time: 2016-02-25 13:14:14
 */
 'use strict'
 
@@ -114,9 +114,13 @@ const getPic = href => {
   if (href.endsWith('ct=cover')) {
     $('a.pic-item[href]').each((index, element) => {
       const origUrl = $(element).attr('href')
-      const res = request('GET', URL.resolve(url, origUrl))
-      const $$ = cheerio.load(res.body.toString())
-      pics.add($$('a.origin').attr('href'))
+      try {
+        const res = request('GET', URL.resolve(url, origUrl))
+        const $$ = cheerio.load(res.body.toString())
+        pics.add($$('a.origin').attr('href'))
+      } catch (err) {
+        // console.error(origUrl, err)
+      }
     })
   }
   return Array.from(pics)
