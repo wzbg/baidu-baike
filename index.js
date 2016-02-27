@@ -2,12 +2,11 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-25 13:25:32
+* @Last Modified time: 2016-02-28 04:51:14
 */
 'use strict'
 
 const fetchUrl = require('fetch').fetchUrl
-const request = require('sync-request')
 const cheerio = require('cheerio')
 const URL = require('url')
 
@@ -26,7 +25,6 @@ module.exports = query => (
         name: $('dd.lemmaWgt-lemmaTitle-title h1').text(), // 名称 
         item: $('dd.lemmaWgt-lemmaTitle-title h2').text(), // 义项
         summary: $('div.lemma-summary').text().trim(), // 概要
-        images: getPic($('div.summary-pic a').attr('href')), // 概要相册
         contents: [] // 内容
       }
       $('div.basic-info dl dt').each((index, element) => {
@@ -46,87 +44,118 @@ module.exports = query => (
           current: href ? false : true
         })
       })
-      $('h2.para-title').each((index, element) => {
-        const title = $(element).find('span.title-text').text()
-        const content = []
-        for (let node =  $(element).next(); node.get(0) && node.get(0).name !== 'h2'; node = node.next()) {
-          const para = getPara($, node)
-          if (para) content.push(para)
-        }
-        result.contents.push({ title, content })
-      })
-      if (!result.contents.length) {
-        const title = ''
-        const content = []
-        $('div.para').each((index, element) => {
-          const para = getPara($, $(element))
-          if (para) content.push(para)
-        })
-        result.contents.push({ title, content })
-      }
       $('span.taglist').each((index, element) => {
         result.tags = result.tags || [] // 词条标签
         result.tags.push($(element).text().replace(/\s+/g, ''))
       })
-      resolve(result)
+      const contents = []
+      $('h2.para-title').each((index, element) => {
+        const title = $(element).find('span.title-text').text()
+        const content = []
+        for (let node =  $(element).next(); node.get(0) && node.get(0).name !== 'h2'; node = node.next()) {
+          content.push(getPara($, node))
+        }
+        contents.push({ title, content })
+      })
+      getPic($('div.summary-pic a').attr('href')).then(images => {
+        result.images = images // 概要相册
+        Promise.all(contents.map(content => (
+          new Promise(resolve => {
+            const title = content.title
+            Promise.all(content.content).then(paras => {
+              const content = []
+              for (let para of paras) {
+                if (para) content.push(para)
+              }
+              resolve({ title, content })
+            })
+          })
+        ))).then(contents => {
+          result.contents = contents
+          if (result.contents.length) {
+            return resolve(result)
+          }
+          const title = ''
+          const content = []
+          $('div.para').each((index, element) => {
+            content.push(getPara($, $(element)))
+          })
+          Promise.all(content).then(paras => {
+            const content = []
+            for (let para of paras) {
+              if (para) content.push(para)
+            }
+            result.contents.push({ title, content })
+            resolve(result)
+          })
+        })
+      })
     })
   })
 )
 
-const getPara = ($, node) => {
-  const text = node.text().replace(/\s+/g, '')
-  const imgs = []
-  node.find('a[href]').each((index, element) => {
-    if (!$(element).find('img').length) return
-    const href = $(element).attr('href')
-    for (let img of getPic(href)) {
-      imgs.push(img)
-    }
-  })
-  const para = { name: node.get(0).name }
-  if (text) {
-    if (para.name === 'table') {
-      para.table = []
-      node.find('tr').each((index, element) => {
-        const tr = []
-        para.table.push(tr)
-        $(element).children().each((index, element) => {
-          tr.push({
-            name: element.name,
-            text: $(element).text().replace(/\s+/g, '')
+const getPara = ($, node) => (
+  new Promise(resolve => {
+    const text = node.text().replace(/\s+/g, '')
+    const para = { name: node.get(0).name }
+    if (text) {
+      if (para.name === 'table') {
+        para.table = []
+        node.find('tr').each((index, element) => {
+          const tr = []
+          para.table.push(tr)
+          $(element).children().each((index, element) => {
+            tr.push({
+              name: element.name,
+              text: $(element).text().replace(/\s+/g, '')
+            })
           })
         })
-      })
-    } else {
-      para.text = text
-    }
-  }
-  if (imgs.length) para.imgs = imgs
-  if (text || para.imgs) return para
-}
-
-const getPic = href => {
-  const pics = new Set()
-  try {
-    if (href) {
-      const res = request('GET', URL.resolve(url, href))
-      const $ = cheerio.load(res.body.toString())
-      pics.add($('a.origin').attr('href'))
-      if (href.endsWith('ct=cover')) {
-        $('a.pic-item[href]').each((index, element) => {
-          const origUrl = $(element).attr('href')
-          try {
-            const res = request('GET', URL.resolve(url, origUrl))
-            const $$ = cheerio.load(res.body.toString())
-            pics.add($$('a.origin').attr('href'))
-          } catch (err) {
-            // console.error(origUrl, err)
-          }
-        })
+      } else {
+        para.text = text
       }
     }
-  } catch (err) {
-    // console.error(href, err)
-  }
-  return Array.from(pics)
-}
+    const promises = []
+    node.find('a[href]').each((index, element) => {
+      if (!$(element).find('img').length) return
+      promises.push($(element).attr('href'))
+    })
+    Promise.all(promises).then(imgs => {
+      if (imgs.length) para.imgs = imgs
+      resolve(text || para.imgs ? para : null)
+    })
+  })
+)
+
+const getPic = href => (
+  new Promise(resolve => {
+    if (!href) return resolve([])
+    request(href).then($ => {
+      if (!$) return resolve([])
+      const pics = new Set()
+      pics.add($('a.origin').attr('href'))
+      if (!href.endsWith('ct=cover')) {
+        return resolve(Array.from(pics))
+      }
+      const promises = []
+      $('a.pic-item[href]').each((index, element) => {
+        const origUrl = $(element).attr('href')
+        promises.push(request(URL.resolve(url, origUrl)))
+      })
+      Promise.all(promises).then($$ => {
+        for (let $ of $$) {
+          pics.add($('a.origin').attr('href'))
+        }
+        resolve(Array.from(pics))
+      })
+    })
+  })
+)
+
+const request = href => (
+  new Promise(resolve => {
+    fetchUrl(URL.resolve(url, href), (err, res, buf) => {
+      resolve(buf ? cheerio.load(buf) : null)
+    })
+  })
+)
