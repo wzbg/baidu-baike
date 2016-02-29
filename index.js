@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-28 04:51:14
+* @Last Modified time: 2016-02-29 19:30:39
 */
 'use strict'
 
@@ -118,10 +118,15 @@ const getPara = ($, node) => (
     const promises = []
     node.find('a[href]').each((index, element) => {
       if (!$(element).find('img').length) return
-      promises.push($(element).attr('href'))
+      promises.push(getPic($(element).attr('href')))
     })
-    Promise.all(promises).then(imgs => {
-      if (imgs.length) para.imgs = imgs
+    Promise.all(promises).then(images => {
+      para.imgs = []
+      for (let imgs of images) {
+        for (let img of imgs) {
+          para.imgs.push(img)
+        }
+      }
       resolve(text || para.imgs ? para : null)
     })
   })
@@ -140,7 +145,7 @@ const getPic = href => (
       const promises = []
       $('a.pic-item[href]').each((index, element) => {
         const origUrl = $(element).attr('href')
-        promises.push(request(URL.resolve(url, origUrl)))
+        promises.push(request(origUrl))
       })
       Promise.all(promises).then($$ => {
         for (let $ of $$) {
