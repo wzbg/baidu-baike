@@ -2,7 +2,7 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-02-29 19:30:39
+* @Last Modified time: 2016-03-01 19:25:24
 */
 'use strict'
 
@@ -118,6 +118,7 @@ const getPara = ($, node) => (
     const promises = []
     node.find('a[href]').each((index, element) => {
       if (!$(element).find('img').length) return
+      if (promises.length > 99) return
       promises.push(getPic($(element).attr('href')))
     })
     Promise.all(promises).then(images => {
