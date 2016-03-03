@@ -2,27 +2,28 @@
 * @Author: zyc
 * @Date:   2016-02-18 14:06:33
 * @Last Modified by:   zyc
-* @Last Modified time: 2016-03-01 19:25:24
+* @Last Modified time: 2016-03-03 16:29:04
 */
 'use strict'
 
 const fetchUrl = require('fetch').fetchUrl
 const cheerio = require('cheerio')
+const isUrl = require('is-url')
 const URL = require('url')
 
-const url = 'http://baike.baidu.com/item/'
+const base = 'http://baike.baidu.com/item/'
 
 module.exports = query => (
   new Promise((resolve, reject) => {
-    fetchUrl(url + encodeURI(query), (err, res, buf) => {
+    fetchUrl(isUrl(query) ? query : base + encodeURIComponent(query), (err, res, buf) => {
       if (err) return reject(err)
-      const finalUrl = decodeURI(res.finalUrl)
-      if (finalUrl.endsWith('/error.html')) return reject(new Error(`[${query}] Not Found`))
+      const finalUrl = decodeURIComponent(res.finalUrl)
+      if (finalUrl.endsWith('/error.html')) return reject(new Error('Not Found'))
       const $ = cheerio.load(buf)
       $('script,sup,.description,.album-list').remove() // 删除参考资料 & 描述 & 词条图册
       const result = {
         finalUrl, // 最终网址
-        name: $('dd.lemmaWgt-lemmaTitle-title h1').text(), // 名称 
+        name: $('dd.lemmaWgt-lemmaTitle-title h1').text(), // 名称
         item: $('dd.lemmaWgt-lemmaTitle-title h2').text(), // 义项
         summary: $('div.lemma-summary').text().trim(), // 概要
         contents: [] // 内容
@@ -34,13 +35,13 @@ module.exports = query => (
           value: $(element).next().text().replace(/\s+/g, '')
         })
       })
-      $('li.item a,li.item span').each((index, element) => {
+      $('li.list-dot a,li.item a,li.item span').each((index, element) => {
         const node = $(element)
         const href = node.attr('href')
         result.items = result.items || [] // 义项
         result.items.push({
           name: node.text(),
-          url: href ? URL.resolve(url, href) : finalUrl,
+          url: href ? URL.resolve(base, href) : finalUrl,
           current: href ? false : true
         })
       })
@@ -160,7 +161,7 @@ const getPic = href => (
 
 const request = href => (
   new Promise(resolve => {
-    fetchUrl(URL.resolve(url, href), (err, res, buf) => {
+    fetchUrl(URL.resolve(base, href), (err, res, buf) => {
       resolve(buf ? cheerio.load(buf) : null)
     })
   })
