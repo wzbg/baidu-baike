@@ -1,6 +1,6 @@
 {
   "name": "baidu-baike",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "百度百科",
   "main": "index.js",
   "scripts": {
